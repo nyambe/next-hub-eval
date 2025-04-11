@@ -18,7 +18,7 @@
     <div class="absolute top-8 right-8 z-20 hidden md:block">
       <nav class="flex items-center gap-8">
         <a href="#" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors">Models</a>
-        <a href="#" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors">About</a>
+        <a href="#about-section" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors" @click.prevent="scrollToSection('about-section')">About</a>
         <a href="#" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors">Services</a>
         <a href="#" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors">Contact</a>
       </nav>
@@ -45,15 +45,10 @@
     >
       <div class="flex flex-col items-center justify-center h-full">
         <nav class="flex flex-col items-center gap-8">
-          <a 
-            v-for="(item, index) in navItems" 
-            :key="index"
-            href="#" 
-            class="text-white hover:text-white/80 text-xl uppercase tracking-wider transition-colors"
-            @click="isMenuOpen = false"
-          >
-            {{ item }}
-          </a>
+          <a href="#" class="text-white hover:text-white/80 text-xl uppercase tracking-wider transition-colors">Models</a>
+          <a href="#about-section" class="text-white hover:text-white/80 text-xl uppercase tracking-wider transition-colors" @click.prevent="scrollToSection('about-section'); isMenuOpen = false">About</a>
+          <a href="#" class="text-white hover:text-white/80 text-xl uppercase tracking-wider transition-colors">Services</a>
+          <a href="#" class="text-white hover:text-white/80 text-xl uppercase tracking-wider transition-colors">Contact</a>
         </nav>
       </div>
     </motion.div>
@@ -181,6 +176,18 @@ import { motion } from 'motion-v'
 // Navigation items
 const navItems = ['Models', 'About', 'Services', 'Contact']
 const isMenuOpen = ref(false)
+
+// Function to handle smooth scrolling to sections
+const scrollToSection = (sectionId) => {
+  const element = document.getElementById(sectionId)
+  if (element) {
+    // Smooth scroll to the element
+    element.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    })
+  }
+}
 
 // Slides data - can be replaced with real data later
 const slidesData = [
@@ -437,5 +444,12 @@ onBeforeUnmount(() => {
 /* Horizontal scrollbar hiding */
 ::-webkit-scrollbar {
   display: none;
+}
+</style>
+
+<style>
+/* Global smooth scrolling (not scoped) */
+html {
+  scroll-behavior: smooth;
 }
 </style> 
