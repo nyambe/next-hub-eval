@@ -8,7 +8,8 @@ export default defineNuxtConfig({
   // https://nuxt.com/modules
   modules: [
     '@nuxthub/core',
-    '@nuxt/eslint'
+    '@nuxt/eslint',
+    '@nuxt/ui'
   ],
   hub: {
     database: true,
@@ -22,6 +23,8 @@ export default defineNuxtConfig({
       openAPI: true
     }
   },
+  css: ['~/assets/css/main.css'],
   // Development
   devtools: { enabled: true },
+  
 })
