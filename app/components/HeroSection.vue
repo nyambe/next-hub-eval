@@ -18,6 +18,8 @@
       @touchstart="handleTouchStart"
       @touchmove="handleTouchMove"
       @touchend="handleTouchEnd"
+      @mouseover="pauseAutoScroll"
+      @mouseleave="resumeAutoScroll"
     >
       <!-- Main scrollable row with all images side by side -->
       <motion.div
@@ -39,7 +41,7 @@
             :class="index === currentSlide ? 'ring-2 ring-white/50' : ''"
           >
             <img 
-              src="/img/sample.png" 
+              :src="`/img/${slide.image}`" 
               :alt="`Model ${index + 1}`" 
               class="h-full w-auto object-cover"
             />
@@ -48,6 +50,36 @@
             <div 
               class="absolute inset-0 bg-black/30 transition-opacity duration-300"
               :class="index === currentSlide ? 'opacity-0' : 'opacity-70 hover:opacity-30'"
+            ></div>
+            
+            <!-- Model name -->
+            <div class="absolute bottom-8 left-4 text-white">
+              <h3 class="text-lg font-semibold">{{ slide.modelName }}</h3>
+              <p class="text-sm text-white/80">{{ slide.location }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Clone of first few slides for seamless looping -->
+        <div 
+          v-for="(slide, index) in loopingSlides" 
+          :key="`loop-${index}`"
+          class="flex-shrink-0 h-screen w-auto relative"
+          @click="handleLoopingSlideClick(index)"
+        >
+          <!-- Model image -->
+          <div 
+            class="h-full w-auto overflow-hidden relative"
+          >
+            <img 
+              :src="`/img/${slide.image}`" 
+              :alt="`Model ${index + 1}`" 
+              class="h-full w-auto object-cover"
+            />
+            
+            <!-- Hover/selected overlay -->
+            <div 
+              class="absolute inset-0 bg-black/30 transition-opacity duration-300 hover:opacity-30"
             ></div>
             
             <!-- Model name -->
@@ -96,14 +128,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { motion } from 'motion-v'
 
 // Slides data - can be replaced with real data later
 const slidesData = [
   { 
     id: 1, 
-    alt: 'Model 1',
+    image: 'sample.png',
     modelName: 'Sophia Lee',
     location: 'New York',
     title: 'Discover New Talent',
@@ -111,7 +143,7 @@ const slidesData = [
   },
   { 
     id: 2, 
-    alt: 'Model 2',
+    image: 'sample2.png',
     modelName: 'James Wilson',
     location: 'Paris',
     title: 'Fashion Forward',
@@ -119,7 +151,7 @@ const slidesData = [
   },
   { 
     id: 3, 
-    alt: 'Model 3',
+    image: 'sample3.png',
     modelName: 'Elena Rodriguez',
     location: 'Milan',
     title: 'Join Our Agency',
@@ -127,7 +159,7 @@ const slidesData = [
   },
   { 
     id: 4, 
-    alt: 'Model 4',
+    image: 'sample.png',
     modelName: 'David Chen',
     location: 'Tokyo',
     title: 'Global Presence',
@@ -135,7 +167,7 @@ const slidesData = [
   },
   { 
     id: 5, 
-    alt: 'Model 5',
+    image: 'sample2.png',
     modelName: 'Amara Okafor',
     location: 'London',
     title: 'Diverse Talent',
@@ -143,12 +175,23 @@ const slidesData = [
   }
 ]
 
+// Create looping slides that are copies of the first few slides
+const loopingSlides = computed(() => {
+  // Take the first 3 slides (or however many needed) for loop continuation
+  return slidesData.slice(0, 3)
+})
+
 const slides = ref(slidesData)
 const currentSlide = ref(0)
 const containerRef = ref(null)
 const isAnimating = ref(false)
 const containerX = ref(0)
 const slideWidth = ref(0)
+
+// Auto-scrolling
+const autoScrollTimer = ref(null)
+const autoScrollEnabled = ref(true)
+const autoScrollInterval = 3000 // 3 seconds
 
 // Touch handling variables
 const touchStartX = ref(0)
@@ -163,6 +206,13 @@ const setCurrentSlide = (index) => {
   currentSlide.value = index
 }
 
+// Handle click on a looping slide (at the end)
+const handleLoopingSlideClick = (index) => {
+  // Reset to the start with the equivalent slide
+  resetToStart()
+  setCurrentSlide(index)
+}
+
 const moveSlider = (direction) => {
   if (isAnimating.value) return
   
@@ -172,20 +222,53 @@ const moveSlider = (direction) => {
   // Calculate new position
   const newPosition = currentPosition.value + direction
   
-  // Check boundaries
-  if (newPosition >= 0 && newPosition < slides.value.length) {
-    currentPosition.value = newPosition
-    
-    // Move the container
-    containerX.value -= direction * slideWidth.value
-    
-    // Update current slide
-    currentSlide.value = Math.min(Math.max(currentSlide.value + direction, 0), slides.value.length - 1)
+  // If we're at the end and moving forward, loop back to start
+  if (newPosition >= slides.value.length) {
+    resetToStart()
+    return
   }
+  
+  // If we're at the start and moving backward, jump to end
+  if (newPosition < 0) {
+    jumpToEnd()
+    return
+  }
+  
+  // Normal movement within bounds
+  currentPosition.value = newPosition
+  containerX.value -= direction * slideWidth.value
+  currentSlide.value = Math.min(Math.max(currentSlide.value + direction, 0), slides.value.length - 1)
+}
+
+// Reset to the start when we reach the end
+const resetToStart = () => {
+  // Animate to the first slide without animation (for looping)
+  isAnimating.value = true
+  setTimeout(() => {
+    containerX.value = 0
+    currentPosition.value = 0
+    currentSlide.value = 0
+    isAnimating.value = false
+  }, 50)
+}
+
+// Jump to end when going backward from the start
+const jumpToEnd = () => {
+  isAnimating.value = true
+  setTimeout(() => {
+    const lastIndex = slides.value.length - 1
+    containerX.value = -lastIndex * slideWidth.value
+    currentPosition.value = lastIndex
+    currentSlide.value = lastIndex
+    isAnimating.value = false
+  }, 50)
 }
 
 const handleWheel = (event) => {
   if (isAnimating.value) return
+  
+  // Stop auto-scrolling when user interacts
+  pauseAutoScroll()
   
   isAnimating.value = true
   setTimeout(() => { isAnimating.value = false }, 500)
@@ -197,9 +280,39 @@ const handleWheel = (event) => {
   moveSlider(direction)
 }
 
+// Auto-scroll function
+const startAutoScroll = () => {
+  if (!autoScrollTimer.value && autoScrollEnabled.value) {
+    autoScrollTimer.value = setInterval(() => {
+      moveSlider(1) // Move to the next slide
+    }, autoScrollInterval)
+  }
+}
+
+const pauseAutoScroll = () => {
+  if (autoScrollTimer.value) {
+    clearInterval(autoScrollTimer.value)
+    autoScrollTimer.value = null
+    
+    // Resume after 5 seconds of inactivity
+    setTimeout(() => {
+      if (autoScrollEnabled.value) {
+        startAutoScroll()
+      }
+    }, 5000)
+  }
+}
+
+const resumeAutoScroll = () => {
+  if (autoScrollEnabled.value && !autoScrollTimer.value) {
+    startAutoScroll()
+  }
+}
+
 // Touch event handlers for mobile support
 const handleTouchStart = (event) => {
   touchStartX.value = event.touches[0].clientX
+  pauseAutoScroll()
 }
 
 const handleTouchMove = (event) => {
@@ -240,6 +353,19 @@ onMounted(() => {
   
   // Center the first slide
   containerX.value = 0
+  
+  // Start auto-scrolling
+  startAutoScroll()
+})
+
+onBeforeUnmount(() => {
+  // Clean up timer when component is unmounted
+  if (autoScrollTimer.value) {
+    clearInterval(autoScrollTimer.value)
+  }
+  
+  // Remove resize listener
+  window.removeEventListener('resize', () => {})
 })
 </script>
 
