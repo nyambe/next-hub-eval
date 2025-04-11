@@ -9,7 +9,8 @@ export default defineNuxtConfig({
   modules: [
     '@nuxthub/core',
     '@nuxt/eslint',
-    '@nuxt/ui'
+    '@nuxt/ui',
+    'motion-v/nuxt'
   ],
   hub: {
     database: true,
