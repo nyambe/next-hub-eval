@@ -324,9 +324,17 @@ const handleWheel = (event) => {
   isAnimating.value = true
   setTimeout(() => { isAnimating.value = false }, 500)
   
-  // Determine scroll direction (positive means scrolling right/down)
-  const delta = event.deltaX !== 0 ? event.deltaX : event.deltaY
-  const direction = delta > 0 ? 1 : -1
+  // Determine scroll direction, prioritize horizontal scroll (deltaX)
+  // If deltaX is 0, we'll use deltaY as a fallback
+  let direction = 0
+  
+  if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+    // User is scrolling horizontally
+    direction = event.deltaX > 0 ? 1 : -1
+  } else {
+    // User is scrolling vertically, we'll interpret this as horizontal for the slider
+    direction = event.deltaY > 0 ? 1 : -1
+  }
   
   moveSlider(direction)
 }
