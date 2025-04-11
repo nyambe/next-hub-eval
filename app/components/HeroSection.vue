@@ -1,5 +1,8 @@
 <template>
   <div class="relative h-screen overflow-hidden bg-black">
+    <!-- Top gradient overlay for navbar -->
+    <div class="absolute top-0 left-0 right-0 h-32 z-10 bg-gradient-to-b from-black/80 to-transparent pointer-events-none"></div>
+    
     <!-- Agency logo -->
     <div class="absolute top-8 left-8 z-20">
       <motion.div
@@ -10,6 +13,50 @@
         <h1 class="text-white text-3xl font-light tracking-[0.3em]">ELITE<span class="font-bold">MODELS</span></h1>
       </motion.div>
     </div>
+    
+    <!-- Navigation Menu - Desktop -->
+    <div class="absolute top-8 right-8 z-20 hidden md:block">
+      <nav class="flex items-center gap-8">
+        <a href="#" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors">Models</a>
+        <a href="#" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors">About</a>
+        <a href="#" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors">Services</a>
+        <a href="#" class="text-white hover:text-white/80 text-sm uppercase tracking-wider transition-colors">Contact</a>
+      </nav>
+    </div>
+    
+    <!-- Mobile Menu Toggle -->
+    <div class="absolute top-8 right-8 z-30 md:hidden">
+      <button 
+        @click="isMenuOpen = !isMenuOpen" 
+        class="text-white p-2"
+      >
+        <Icon v-if="!isMenuOpen" name="heroicons:bars-3" class="w-6 h-6" />
+        <Icon v-else name="heroicons:x-mark" class="w-6 h-6" />
+      </button>
+    </div>
+    
+    <!-- Mobile Menu Panel -->
+    <motion.div
+      v-if="isMenuOpen"
+      class="fixed inset-0 bg-black/95 z-20 md:hidden"
+      :initial="{ opacity: 0 }"
+      :animate="{ opacity: 1 }"
+      :transition="{ duration: 0.3 }"
+    >
+      <div class="flex flex-col items-center justify-center h-full">
+        <nav class="flex flex-col items-center gap-8">
+          <a 
+            v-for="(item, index) in navItems" 
+            :key="index"
+            href="#" 
+            class="text-white hover:text-white/80 text-xl uppercase tracking-wider transition-colors"
+            @click="isMenuOpen = false"
+          >
+            {{ item }}
+          </a>
+        </nav>
+      </div>
+    </motion.div>
     
     <!-- Ticker Container -->
     <div 
@@ -130,6 +177,10 @@
 <script setup>
 import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { motion } from 'motion-v'
+
+// Navigation items
+const navItems = ['Models', 'About', 'Services', 'Contact']
+const isMenuOpen = ref(false)
 
 // Slides data - can be replaced with real data later
 const slidesData = [
