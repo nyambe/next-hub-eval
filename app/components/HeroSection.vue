@@ -1,15 +1,15 @@
 <template>
   <div class="relative h-screen w-screen overflow-hidden">
-    <!-- Main container with vertical slides -->
+    <!-- Main container with horizontal slides -->
     <div
       ref="containerRef"
-      class="absolute inset-0 flex flex-col"
+      class="absolute inset-0 flex flex-row"
       @wheel.prevent="handleWheel"
     >
       <div 
         v-for="(slide, index) in slides" 
         :key="index"
-        class="flex-shrink-0 h-full w-full flex items-center justify-center relative"
+        class="flex-shrink-0 h-full w-screen flex items-center justify-center relative"
       >
         <!-- Background image with motion -->
         <motion.div 
@@ -24,7 +24,7 @@
           <img 
             src="/img/sample.png" 
             :alt="`Model ${index + 1}`" 
-            class="object-cover h-full w-full"
+            class="object-contain h-full max-h-screen w-auto mx-auto"
           />
           <!-- Dark overlay -->
           <div class="absolute inset-0 bg-black/30"></div>
@@ -66,7 +66,7 @@
     </div>
     
     <!-- Navigation indicators -->
-    <div class="absolute right-8 top-1/2 transform -translate-y-1/2 flex flex-col gap-3 z-20">
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-row gap-3 z-20">
       <button 
         v-for="(_, index) in slides" 
         :key="index"
@@ -78,17 +78,17 @@
     
     <!-- Scroll indicator -->
     <motion.div
-      :animate="{ y: [0, 10, 0] }"
+      :animate="{ x: [-10, 10, -10] }"
       :transition="{ 
         repeat: Infinity, 
         duration: 2,
         ease: 'easeInOut'
       }"
-      class="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 text-white/70"
+      class="absolute right-10 top-1/2 transform -translate-y-1/2 z-20 text-white/70"
     >
       <div class="flex flex-col items-center">
         <span class="text-xs uppercase tracking-widest mb-2">Scroll</span>
-        <Icon name="heroicons:arrow-down" class="w-5 h-5" />
+        <Icon name="heroicons:arrow-right" class="w-5 h-5" />
       </div>
     </motion.div>
   </div>
@@ -131,7 +131,10 @@ const handleWheel = (event) => {
   isAnimating.value = true
   setTimeout(() => { isAnimating.value = false }, 800) // Debounce scrolling
   
-  const direction = event.deltaY > 0 ? 1 : -1
+  // For horizontal scrolling, we use deltaX instead of deltaY
+  // If deltaX is 0, we'll use deltaY (for mouse wheels without horizontal scroll)
+  const delta = event.deltaX !== 0 ? event.deltaX : event.deltaY
+  const direction = delta > 0 ? 1 : -1
   const nextSlide = (currentSlide.value + direction + slides.value.length) % slides.value.length
   
   goToSlide(nextSlide)
@@ -140,9 +143,9 @@ const handleWheel = (event) => {
 const goToSlide = (index) => {
   currentSlide.value = index
   
-  // Animate the container position
+  // Animate the container position horizontally
   if (containerRef.value) {
-    containerRef.value.style.transform = `translateY(-${index * 100}%)`
+    containerRef.value.style.transform = `translateX(-${index * 100}%)`
     containerRef.value.style.transition = 'transform 0.8s ease-out'
   }
 }
@@ -157,7 +160,7 @@ onMounted(() => {
 
 <style scoped>
 /* Smooth transitions for all animations */
-.flex-col > div {
+.flex-row > div {
   transition: transform 0.8s ease-out;
 }
 </style> 
