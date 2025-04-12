@@ -41,3 +41,9 @@ useHead({
     <NuxtPage />
   </UApp>
 </template>
+<style>
+html {
+  scroll-behavior: smooth;
+  font-family: 'Montserrat', sans-serif;
+}
+</style>
